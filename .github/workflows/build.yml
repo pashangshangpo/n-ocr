@@ -34,26 +34,21 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [x86_64-pc-windows-msvc, aarch64-pc-windows-msvc]
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release
 
       - name: Rename binary
         shell: pwsh
-        run: Copy-Item "target/${{ matrix.target }}/release/n-ocr.exe" "n-ocr-${{ matrix.target }}.exe"
+        run: Copy-Item "target/release/n-ocr.exe" "n-ocr-x86_64-windows.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: n-ocr-${{ matrix.target }}
-          path: n-ocr-${{ matrix.target }}.exe
+          name: n-ocr-x86_64-windows
+          path: n-ocr-x86_64-windows.exe
