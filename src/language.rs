@@ -17,10 +17,16 @@ macro_rules! languages {
                 }
             }
 
-            /// Returns Some(tesseract_code) if supported, None if not.
             pub fn as_tesseract_code(&self) -> Option<&'static str> {
                 match self {
                     $(Language::$name => $tess),*
+                }
+            }
+
+            pub fn from_code(code: &str) -> Option<Self> {
+                match code {
+                    $($iso => Some(Language::$name),)*
+                    _ => None,
                 }
             }
         }
@@ -108,11 +114,5 @@ languages! {
 impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_lang_code())
-    }
-}
-
-impl PartialEq<&str> for Language {
-    fn eq(&self, other: &&str) -> bool {
-        self.to_string().as_str() == *other
     }
 }

@@ -1,64 +1,22 @@
 [package]
 name = "uni-ocr"
-version = "0.1.5"
-authors = ["mediar-ai"]
-description = "Native OCR for MacOS, Windows, Linux"
-repository = "https://github.com/mediar-ai/uniOCR"
-license = "MIT"
+version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "uni-ocr"
+path = "src/main.rs"
 
 [dependencies]
-serde = { version = "1.0.200", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-# async
-tokio = { version = "1.41.1", features = ["full"] }
-
-# Image processing
 image = "0.25.2"
+anyhow = "1.0"
+clap = { version = "4", features = ["derive"] }
 
-# OCR
-rusty-tesseract = "1.1.10"
-
-anyhow = "1.0.86"
-
-
-
-tracing = "0.1"
-
-base64 = "0.22.1"
-
-reqwest = { version = "0.12.11", features = ["json"] }
-
-[dev-dependencies]
-tempfile = "3.3.0"
-criterion = { version = "0.5.1", features = ["async_tokio"] }
-strsim = "0.11.1"
-memory-stats = "1.2.0"
-
-# websocket example
-futures-util = "0.3"
-tokio-tungstenite = "0.26.2"
-serde = "1.0.200"
-xcap = "0.4.1"
-
-[package.metadata.osx]
-framework = ["Vision", "AppKit"]
-
-[[bench]]
-name = "ocr_benchmark"
-harness = false
-
-[[bench]]
-name = "apple_leak_bench"
-harness = false
-
-[[example]]
-name = "screen_capture"
-path = "examples/screen_capture.rs"
+[build-dependencies]
+cc = "1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.61.1", features = [
@@ -67,11 +25,3 @@ windows = { version = "0.61.1", features = [
   "Storage",
   "Storage_Streams",
 ] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-cidre = { git = "https://github.com/yury/cidre", version = "0.11.3", default-features = false, features = ["cf", "cg", "cv", "cm", "ns", "objc", "vn", "blocks", "macos_13_0"] }
-libc = "^0.2.168"
-url = "2.5.0"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-libc = "^0.2.168"
