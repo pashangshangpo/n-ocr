@@ -15,7 +15,7 @@ struct Cli {
     #[arg(help = "Path to image file")]
     image: PathBuf,
 
-    #[arg(short, long, default_value = "en", help = "Language code")]
+    #[arg(short, long, default_value = "zh", help = "Language code")]
     language: Vec<String>,
 
     #[arg(short, long, help = "Output as JSON")]
@@ -35,7 +35,7 @@ fn main() -> Result<()> {
         .collect();
 
     let languages = if languages.is_empty() {
-        vec![Language::English]
+        vec![Language::Chinese]
     } else {
         languages
     };

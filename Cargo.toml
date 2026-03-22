@@ -8,10 +8,17 @@ build = "build.rs"
 name = "uni-ocr"
 path = "src/main.rs"
 
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-image = "0.25.2"
+image = { version = "0.25.2", default-features = false, features = ["png", "jpeg", "bmp", "tiff", "webp"] }
 anyhow = "1.0"
 clap = { version = "4", features = ["derive"] }
 
