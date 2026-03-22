@@ -10,9 +10,9 @@ use language::Language;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "uni-ocr", about = "Native OCR CLI tool")]
+#[command(name = "n-ocr", about = "")]
 struct Cli {
-    #[arg(help = "Path to image file")]
+    #[arg(help = "")]
     image: PathBuf,
 
     #[arg(short, long, default_value = "zh", help = "Language code")]

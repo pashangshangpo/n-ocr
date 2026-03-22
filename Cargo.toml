@@ -1,11 +1,11 @@
 [package]
-name = "uni-ocr"
+name = "n-ocr"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
 
 [[bin]]
-name = "uni-ocr"
+name = "n-ocr"
 path = "src/main.rs"
 
 [profile.release]

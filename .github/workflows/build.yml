@@ -24,13 +24,13 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Rename binary
-        run: cp target/${{ matrix.target }}/release/uni-ocr uni-ocr-${{ matrix.target }}
+        run: cp target/${{ matrix.target }}/release/n-ocr n-ocr-${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: uni-ocr-${{ matrix.target }}
-          path: uni-ocr-${{ matrix.target }}
+          name: n-ocr-${{ matrix.target }}
+          path: n-ocr-${{ matrix.target }}
 
   build-windows:
     runs-on: windows-latest
@@ -50,10 +50,10 @@ jobs:
 
       - name: Rename binary
         shell: pwsh
-        run: Copy-Item "target/${{ matrix.target }}/release/uni-ocr.exe" "uni-ocr-${{ matrix.target }}.exe"
+        run: Copy-Item "target/${{ matrix.target }}/release/n-ocr.exe" "n-ocr-${{ matrix.target }}.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: uni-ocr-${{ matrix.target }}
-          path: uni-ocr-${{ matrix.target }}.exe
+          name: n-ocr-${{ matrix.target }}
+          path: n-ocr-${{ matrix.target }}.exe
