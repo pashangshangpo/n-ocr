@@ -35,13 +35,22 @@ pub fn perform_ocr_windows(image: &DynamicImage) -> Result<(String, String, Opti
     let engine = WindowsOcrEngine::TryCreateFromUserProfileLanguages()?;
     let result = engine.RecognizeAsync(&bitmap)?.get()?;
 
-    let text = result.Text()?.to_string();
+    let mut text_lines: Vec<String> = Vec::new();
+    let mut json_elements: Vec<serde_json::Value> = Vec::new();
 
-    let json_output = serde_json::json!([{
-        "text": text,
-        "confidence": "1.0"
-    }])
-    .to_string();
+    let lines = result.Lines()?;
+    for i in 0..lines.Size()? {
+        let line = lines.GetAt(i)?;
+        let line_text = line.Text()?.to_string();
+        text_lines.push(line_text.clone());
+        json_elements.push(serde_json::json!({
+            "text": line_text,
+            "confidence": "1.0",
+        }));
+    }
+
+    let text = text_lines.join("\n");
+    let json_output = serde_json::to_string(&json_elements)?;
 
     Ok((text, json_output, Some(1.0)))
 }
