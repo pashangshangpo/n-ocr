@@ -7,13 +7,17 @@ mod microsoft;
 use anyhow::Result;
 use clap::Parser;
 use language::Language;
+use std::io::Read;
 use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "nocr", about = "")]
 struct Cli {
     #[arg(help = "")]
-    image: PathBuf,
+    image: Option<PathBuf>,
+
+    #[arg(long, help = "Image URL")]
+    url: Option<String>,
 
     #[arg(short, long, default_value = "zh", help = "Language code")]
     language: Vec<String>,
@@ -25,8 +29,23 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let image = image::open(&cli.image)
-        .map_err(|e| anyhow::anyhow!("Failed to open image '{}': {}", cli.image.display(), e))?;
+    let image = if let Some(url) = &cli.url {
+        let response = ureq::get(url)
+            .call()
+            .map_err(|e| anyhow::anyhow!("Failed to fetch image from URL '{}': {}", url, e))?;
+        let mut bytes: Vec<u8> = Vec::new();
+        response
+            .into_reader()
+            .read_to_end(&mut bytes)
+            .map_err(|e| anyhow::anyhow!("Failed to read image data: {}", e))?;
+        image::load_from_memory(&bytes)
+            .map_err(|e| anyhow::anyhow!("Failed to decode image from URL: {}", e))?
+    } else if let Some(path) = &cli.image {
+        image::open(path)
+            .map_err(|e| anyhow::anyhow!("Failed to open image '{}': {}", path.display(), e))?
+    } else {
+        return Err(anyhow::anyhow!("Either an image path or --url must be provided"));
+    };
 
     let languages: Vec<Language> = cli
         .language
