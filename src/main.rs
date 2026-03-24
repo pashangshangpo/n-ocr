@@ -25,6 +25,27 @@ struct Cli {
     json: bool,
 }
 
+fn load_image_from_bytes(bytes: &[u8]) -> Result<image::DynamicImage> {
+    if let Ok(img) = image::load_from_memory(bytes) {
+        return Ok(img);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        return apple::decode_native(bytes);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        return microsoft::decode_native(bytes);
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        Err(anyhow::anyhow!("Unsupported image format"))
+    }
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -33,11 +54,13 @@ fn main() -> Result<()> {
             .send()
             .with_context(|| format!("Failed to fetch image from URL '{}'", url))?
             .into_bytes();
-        image::load_from_memory(&bytes)
+        load_image_from_bytes(&bytes)
             .context("Failed to decode image from URL")?
     } else if let Some(path) = &cli.image {
-        image::open(path)
-            .with_context(|| format!("Failed to open image '{}'", path.display()))?
+        let bytes = std::fs::read(path)
+            .with_context(|| format!("Failed to read file '{}'", path.display()))?;
+        load_image_from_bytes(&bytes)
+            .with_context(|| format!("Failed to decode image '{}'", path.display()))?
     } else {
         return Err(anyhow::anyhow!("Either an image path or --url must be provided"));
     };

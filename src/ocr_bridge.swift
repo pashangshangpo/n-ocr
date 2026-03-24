@@ -1,6 +1,7 @@
 import Foundation
 import Vision
 import CoreGraphics
+import ImageIO
 
 @_cdecl("perform_ocr")
 func performOcr(
@@ -110,6 +111,64 @@ func performOcr(
 func freeOcrResult(_ result: OcrResult) {
     free(UnsafeMutablePointer(mutating: result.text))
     free(UnsafeMutablePointer(mutating: result.json))
+}
+
+@_cdecl("decode_image_native")
+func decodeImageNative(fileData: UnsafePointer<UInt8>, fileLen: UInt32) -> DecodedImage {
+    let data = Data(bytes: fileData, count: Int(fileLen))
+
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+          let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+        return DecodedImage(data: nil, width: 0, height: 0, success: 0)
+    }
+
+    let w = cgImage.width
+    let h = cgImage.height
+    let bytesPerRow = w * 4
+    let totalBytes = bytesPerRow * h
+
+    let buf = UnsafeMutablePointer<UInt8>.allocate(capacity: totalBytes)
+
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+
+    guard let ctx = CGContext(
+        data: buf,
+        width: w,
+        height: h,
+        bitsPerComponent: 8,
+        bytesPerRow: bytesPerRow,
+        space: colorSpace,
+        bitmapInfo: bitmapInfo.rawValue
+    ) else {
+        buf.deallocate()
+        return DecodedImage(data: nil, width: 0, height: 0, success: 0)
+    }
+
+    ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: w, height: h))
+
+    for i in 0..<(w * h) {
+        let offset = i * 4
+        let r = buf[offset]
+        let g = buf[offset + 1]
+        let b = buf[offset + 2]
+        let a = buf[offset + 3]
+        if a > 0 && a < 255 {
+            let af = Float(a) / 255.0
+            buf[offset]     = UInt8(min(Float(r) / af, 255))
+            buf[offset + 1] = UInt8(min(Float(g) / af, 255))
+            buf[offset + 2] = UInt8(min(Float(b) / af, 255))
+        }
+    }
+
+    return DecodedImage(data: buf, width: UInt32(w), height: UInt32(h), success: 1)
+}
+
+@_cdecl("free_decoded_image")
+func freeDecodedImage(_ img: DecodedImage) {
+    if let ptr = img.data {
+        ptr.deallocate()
+    }
 }
 
 func makeEmptyResult() -> OcrResult {

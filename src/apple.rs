@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use image::DynamicImage;
 use image::GenericImageView;
 use std::collections::HashMap;
@@ -13,6 +14,14 @@ struct OcrResult {
     confidence: f64,
 }
 
+#[repr(C)]
+struct DecodedImage {
+    data: *mut u8,
+    width: u32,
+    height: u32,
+    success: i32,
+}
+
 extern "C" {
     fn perform_ocr(
         image_data: *const u8,
@@ -23,6 +32,13 @@ extern "C" {
     ) -> OcrResult;
 
     fn free_ocr_result(result: OcrResult);
+
+    fn decode_image_native(
+        file_data: *const u8,
+        file_len: u32,
+    ) -> DecodedImage;
+
+    fn free_decoded_image(img: DecodedImage);
 }
 
 static APPLE_LANGUAGE_MAP: OnceLock<HashMap<Language, &'static str>> = OnceLock::new();
@@ -50,6 +66,27 @@ fn get_apple_languages(languages: &[Language]) -> Vec<String> {
         .iter()
         .filter_map(|lang| map.get(lang).map(|&s| s.to_string()))
         .collect()
+}
+
+pub fn decode_native(bytes: &[u8]) -> Result<DynamicImage> {
+    unsafe {
+        let result = decode_image_native(bytes.as_ptr(), bytes.len() as u32);
+        if result.success == 0 || result.data.is_null() {
+            return Err(anyhow::anyhow!("Failed to decode image via native decoder"));
+        }
+
+        let w = result.width;
+        let h = result.height;
+        let len = (w * h * 4) as usize;
+        let pixels = std::slice::from_raw_parts(result.data, len).to_vec();
+
+        free_decoded_image(result);
+
+        let rgba = image::RgbaImage::from_raw(w, h, pixels)
+            .context("Failed to construct RgbaImage from decoded data")?;
+
+        Ok(DynamicImage::ImageRgba8(rgba))
+    }
 }
 
 pub fn perform_ocr_apple(
