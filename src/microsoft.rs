@@ -23,26 +23,26 @@ fn bytes_to_stream(
 
 #[cfg(target_os = "windows")]
 pub fn decode_native(bytes: &[u8]) -> Result<DynamicImage> {
-    use windows::Graphics::Imaging::BitmapPixelFormat;
+    use windows::Graphics::Imaging::{BitmapPixelFormat, BitmapAlphaMode, BitmapTransform, ExifOrientationMode, ColorManagementMode};
 
     let stream = bytes_to_stream(bytes)?;
 
     let decoder = BitmapDecoder::CreateAsync(&stream)?.get()?;
 
-    let transform = decoder.BitmapTransform()?;
+    let transform = BitmapTransform::new()?;
     let pf = BitmapPixelFormat::Rgba8;
     let bitmap = decoder
-        .GetPixelDataAsync(
+        .GetPixelDataTransformedAsync(
             pf,
-            windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied,
+            BitmapAlphaMode::Premultiplied,
             &transform,
-            windows::Graphics::Imaging::ExifOrientationMode::RespectExifOrientation,
-            windows::Graphics::Imaging::ColorManagementMode::ColorManageToSRgb,
+            ExifOrientationMode::RespectExifOrientation,
+            ColorManagementMode::ColorManageToSRgb,
         )?
         .get()?;
 
     let pixel_data = bitmap.DetachPixelData()?;
-    let width = decoder.PixelWidth()? ;
+    let width = decoder.PixelWidth()?;
     let height = decoder.PixelHeight()?;
 
     let mut pixels = pixel_data.to_vec();
