@@ -17,6 +17,7 @@ fn bytes_to_stream(
     writer.WriteBytes(buffer)?;
     writer.StoreAsync()?.get()?;
     writer.FlushAsync()?.get()?;
+    writer.DetachStream()?;
     stream.Seek(0)?;
     Ok(stream)
 }
